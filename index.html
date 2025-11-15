@@ -1,53 +1,124 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Notificaciones Programadas</title>
   <link rel="manifest" href="manifest.json" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}</style>
 </head>
 <body class="bg-gray-100 text-gray-900">
   <div class="max-w-lg mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
     <h1 class="text-2xl font-bold mb-4 text-center">⏰ Notificaciones Programadas</h1>
-    <p class="mb-4 text-center">Este servicio enviará notificaciones de lunes a viernes.</p>
+    <p class="mb-4 text-center">Notificaciones L-V a horarios configurables. Al tocar la notificación se abre la URL configurada.</p>
 
     <button id="enable-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all">Habilitar Notificaciones</button>
     <p id="status" class="mt-4 text-center text-sm text-gray-600"></p>
+
+    <div class="mt-6">
+      <h2 class="text-lg font-semibold mb-2">Prueba</h2>
+      <p class="text-sm text-gray-600 mb-2">Enviar una notificación de prueba (vibración + sonido predeterminado del dispositivo).</p>
+      <div class="flex gap-2">
+        <button id="testNotification" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg">Enviar notificación de prueba</button>
+        <button id="testForeground" class="py-2 px-3 bg-gray-200 rounded-lg">Test sonido (foreground)</button>
+      </div>
+    </div>
   </div>
 
   <div class="max-w-lg mx-auto mt-6 p-4 bg-white rounded-xl shadow text-center">
     <h2 class="text-xl font-semibold mb-2">⚙️ Configuración de Horarios</h2>
-    <p class="text-sm mb-4">Modificá los horarios. El SW se actualiza solo.</p>
+    <p class="text-sm mb-4">Modificá los horarios. El Service Worker intentará respetarlos incluso en segundo plano.</p>
     <div class="space-y-3" id="inputs"></div>
-    <button id="save-btn" class="mt-4 w-full py-2 bg-green-600 text-white rounded-xl hover:bg-green-700">Guardar</button>
+    <div class="flex gap-2 mt-2">
+      <button id="addTime" class="flex-1 py-2 bg-gray-100 rounded-xl">Agregar hora</button>
+      <button id="save-btn" class="flex-1 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700">Guardar</button>
+    </div>
   </div>
 
+  <audio id="ding" preload="auto">
+    <source src="ding.ogg" type="audio/ogg" />
+  </audio>
+
 <script>
+const TARGET_URL = "https://micronauta4.dnsalias.net/web/urbano/?conf=cbaciudad";
+
 async function enableNotifications() {
   const permission = await Notification.requestPermission();
-  if (permission !== "granted") return;
-  if ("serviceWorker" in navigator) await navigator.serviceWorker.register("service-worker.js");
-  document.getElementById("status").textContent = "Notificaciones habilitadas";
+  if (permission !== "granted") {
+    document.getElementById("status").textContent = "Permiso denegado";
+    return;
+  }
+  if ("serviceWorker" in navigator) {
+    try {
+      await navigator.serviceWorker.register("service-worker.js");
+      document.getElementById("status").textContent = "Notificaciones habilitadas";
+      const times = JSON.parse(localStorage.getItem("notiTimes") || '["07:50","16:50"]');
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "updateTimes", times });
+      }
+    } catch (e) {
+      console.error(e);
+      document.getElementById("status").textContent = "Error registrando SW";
+    }
+  } else {
+    document.getElementById("status").textContent = "Service Worker no soportado";
+  }
 }
 
 document.getElementById("enable-btn").addEventListener("click", enableNotifications);
 
+document.getElementById("testNotification").addEventListener("click", async () => {
+  if (!('serviceWorker' in navigator)) { alert('Service Worker no soportado.'); return; }
+  const reg = await navigator.serviceWorker.ready;
+  reg.active.postMessage({ type: 'showNow', title: '🔔 Notificación de prueba', body: 'La PWA está funcionando. Toca para abrir.', url: TARGET_URL });
+});
+
+document.getElementById("testForeground").addEventListener("click", () => {
+  const audio = document.getElementById('ding');
+  audio.currentTime = 0;
+  audio.play().catch(()=>{ alert('No se pudo reproducir sonido (requiere interacción).'); });
+});
+
 const inputContainer = document.getElementById("inputs");
 const saveBtn = document.getElementById("save-btn");
+const addTimeBtn = document.getElementById("addTime");
 
 function loadTimes() {
-  const saved = JSON.parse(localStorage.getItem("notiTimes") || '["07:50", "16:50"]');
+  const saved = JSON.parse(localStorage.getItem("notiTimes") || '["07:50","16:50"]');
   inputContainer.innerHTML = "";
   saved.forEach((t, i) => {
-    inputContainer.innerHTML += `<input type="time" value="${t}" data-idx="${i}" class="w-full p-2 border rounded-xl">`;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex gap-2';
+    wrapper.innerHTML = `<input type="time" value="${t}" data-idx="${i}" class="flex-1 p-2 border rounded-xl"> <button class="removeBtn p-2 bg-red-500 text-white rounded-xl">Eliminar</button>`;
+    inputContainer.appendChild(wrapper);
+  });
+  attachRemove();
+}
+
+function attachRemove() {
+  [...document.querySelectorAll('.removeBtn')].forEach(b=>{
+    b.onclick = (e)=>{ e.target.parentElement.remove(); };
   });
 }
 
+addTimeBtn.addEventListener('click', ()=>{
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()+1).padStart(2,'0');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex gap-2';
+  wrapper.innerHTML = `<input type="time" value="${hh}:${mm}" class="flex-1 p-2 border rounded-xl"> <button class="removeBtn p-2 bg-red-500 text-white rounded-xl">Eliminar</button>`;
+  inputContainer.appendChild(wrapper);
+  attachRemove();
+});
+
 saveBtn.addEventListener("click", () => {
-  const times = [...document.querySelectorAll("#inputs input")].map(e => e.value);
+  const times = [...document.querySelectorAll("#inputs input")].map(e => e.value).filter(Boolean);
+  if (times.length === 0) { alert('Ingresá al menos un horario'); return; }
   localStorage.setItem("notiTimes", JSON.stringify(times));
   if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: "updateTimes", times });
+  alert('Horarios guardados');
 });
 
 loadTimes();
