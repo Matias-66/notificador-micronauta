@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notificaciones Programadas</title>
+  <link rel="manifest" href="manifest.json" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="max-w-lg mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
+    <h1 class="text-2xl font-bold mb-4 text-center">⏰ Notificaciones Programadas</h1>
+    <p class="mb-4 text-center">Este servicio enviará notificaciones de lunes a viernes.</p>
+
+    <button id="enable-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all">Habilitar Notificaciones</button>
+    <p id="status" class="mt-4 text-center text-sm text-gray-600"></p>
+  </div>
+
+  <div class="max-w-lg mx-auto mt-6 p-4 bg-white rounded-xl shadow text-center">
+    <h2 class="text-xl font-semibold mb-2">⚙️ Configuración de Horarios</h2>
+    <p class="text-sm mb-4">Modificá los horarios. El SW se actualiza solo.</p>
+    <div class="space-y-3" id="inputs"></div>
+    <button id="save-btn" class="mt-4 w-full py-2 bg-green-600 text-white rounded-xl hover:bg-green-700">Guardar</button>
+  </div>
+
+<script>
+async function enableNotifications() {
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return;
+  if ("serviceWorker" in navigator) await navigator.serviceWorker.register("service-worker.js");
+  document.getElementById("status").textContent = "Notificaciones habilitadas";
+}
+
+document.getElementById("enable-btn").addEventListener("click", enableNotifications);
+
+const inputContainer = document.getElementById("inputs");
+const saveBtn = document.getElementById("save-btn");
+
+function loadTimes() {
+  const saved = JSON.parse(localStorage.getItem("notiTimes") || '["07:50", "16:50"]');
+  inputContainer.innerHTML = "";
+  saved.forEach((t, i) => {
+    inputContainer.innerHTML += `<input type="time" value="${t}" data-idx="${i}" class="w-full p-2 border rounded-xl">`;
+  });
+}
+
+saveBtn.addEventListener("click", () => {
+  const times = [...document.querySelectorAll("#inputs input")].map(e => e.value);
+  localStorage.setItem("notiTimes", JSON.stringify(times));
+  if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: "updateTimes", times });
+});
+
+loadTimes();
+</script>
+</body>
+</html>
