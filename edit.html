@@ -7,27 +7,41 @@
   <link rel="manifest" href="manifest.json" />
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100 text-gray-900">
   <div class="max-w-lg mx-auto pt-6 pb-24 px-4 space-y-4">
+
+    <!-- Botón volver -->
     <button id="backBtn" class="text-sm text-blue-600">&larr; Volver</button>
 
     <h1 class="text-xl font-bold text-center">Configurar notificación</h1>
 
+    <!-- Título -->
     <div>
       <label class="font-semibold text-sm">Nombre de notificación</label>
-      <input id="notifTitle" class="w-full border rounded px-2 py-1 mt-1" placeholder="Ej: Recordatorio colectivo" />
+      <input id="notifTitle"
+             class="w-full border rounded px-2 py-1 mt-1"
+             placeholder="Ej: Recordatorio colectivo" />
     </div>
 
+    <!-- Cuerpo (actualizado con TEXTAREA) -->
     <div>
       <label class="font-semibold text-sm">Cuerpo de notificación</label>
-      <input id="notifBody" class="w-full border rounded px-2 py-1 mt-1" placeholder="Ej: Click para abrir TUBONDI" />
+      <textarea id="notifBody"
+                class="w-full border rounded px-2 py-1 mt-1"
+                rows="3"
+                placeholder="Ej: Línea 1&#10;Línea 2"></textarea>
     </div>
 
+    <!-- URL -->
     <div>
       <label class="font-semibold text-sm">URL destino</label>
-      <input id="notifUrl" class="w-full border rounded px-2 py-1 mt-1" placeholder="https://... o intent://..." />
+      <input id="notifUrl"
+             class="w-full border rounded px-2 py-1 mt-1"
+             placeholder="https://... o intent://..." />
     </div>
 
+    <!-- Días -->
     <div>
       <label class="font-semibold text-sm">Días activos</label>
       <div class="grid grid-cols-7 gap-1 mt-1 text-center text-xs">
@@ -41,28 +55,36 @@
       </div>
     </div>
 
+    <!-- Horarios -->
     <div>
       <div class="flex items-center justify-between">
         <label class="font-semibold text-sm">Horarios (hh:mm)</label>
-        <button id="addTime" class="w-8 h-8 bg-blue-600 text-white rounded-full text-lg">+</button>
+        <button id="addTime"
+                class="w-8 h-8 bg-blue-600 text-white rounded-full text-lg">+</button>
       </div>
       <div id="timesList" class="space-y-2 mt-2"></div>
     </div>
 
+    <!-- Toggle activar -->
     <label class="flex items-center space-x-2">
       <input id="toggleActive" type="checkbox">
       <span class="font-semibold text-sm">Activar notificación</span>
     </label>
 
-    <button id="testBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm">
+    <!-- Botón prueba -->
+    <button id="testBtn"
+            class="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm">
       Probar notificación
     </button>
 
-    <button id="saveBtn" class="w-full bg-green-600 text-white py-2 rounded-lg text-sm">
+    <!-- Botón guardar -->
+    <button id="saveBtn"
+            class="w-full bg-green-600 text-white py-2 rounded-lg text-sm">
       Guardar
     </button>
 
     <p id="status" class="text-center text-xs text-gray-500"></p>
+
   </div>
 
 <script src="edit.js"></script>
