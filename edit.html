@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Asistente - Notificación</title>
+  <link rel="manifest" href="manifest.json" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="max-w-lg mx-auto pt-6 pb-24 px-4 space-y-4">
+    <button id="backBtn" class="text-sm text-blue-600">&larr; Volver</button>
+
+    <h1 class="text-xl font-bold text-center">Configurar notificación</h1>
+
+    <div>
+      <label class="font-semibold text-sm">Nombre de notificación</label>
+      <input id="notifTitle" class="w-full border rounded px-2 py-1 mt-1" placeholder="Ej: Recordatorio colectivo" />
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm">Cuerpo de notificación</label>
+      <input id="notifBody" class="w-full border rounded px-2 py-1 mt-1" placeholder="Ej: Click para abrir TUBONDI" />
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm">URL destino</label>
+      <input id="notifUrl" class="w-full border rounded px-2 py-1 mt-1" placeholder="https://... o intent://..." />
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm">Días activos</label>
+      <div class="grid grid-cols-7 gap-1 mt-1 text-center text-xs">
+        <label><input type="checkbox" class="day" data-day="1">L</label>
+        <label><input type="checkbox" class="day" data-day="2">M</label>
+        <label><input type="checkbox" class="day" data-day="3">M</label>
+        <label><input type="checkbox" class="day" data-day="4">J</label>
+        <label><input type="checkbox" class="day" data-day="5">V</label>
+        <label><input type="checkbox" class="day" data-day="6">S</label>
+        <label><input type="checkbox" class="day" data-day="0">D</label>
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between">
+        <label class="font-semibold text-sm">Horarios (hh:mm)</label>
+        <button id="addTime" class="w-8 h-8 bg-blue-600 text-white rounded-full text-lg">+</button>
+      </div>
+      <div id="timesList" class="space-y-2 mt-2"></div>
+    </div>
+
+    <label class="flex items-center space-x-2">
+      <input id="toggleActive" type="checkbox">
+      <span class="font-semibold text-sm">Activar notificación</span>
+    </label>
+
+    <button id="testBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-sm">
+      Probar notificación
+    </button>
+
+    <button id="saveBtn" class="w-full bg-green-600 text-white py-2 rounded-lg text-sm">
+      Guardar
+    </button>
+
+    <p id="status" class="text-center text-xs text-gray-500"></p>
+  </div>
+
+<script src="edit.js"></script>
+</body>
+</html>

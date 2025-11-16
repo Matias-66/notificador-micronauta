@@ -1,7 +1,7 @@
 {
-  "name": "Notificador de Colectivo",
-  "short_name": "Colectivo",
-  "start_url": "./index.html",
+  "name": "Asistente",
+  "short_name": "Asistente",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1d4ed8",
