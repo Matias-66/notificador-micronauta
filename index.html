@@ -6,6 +6,20 @@
   <title>Asistente</title>
   <link rel="manifest" href="manifest.json" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- OneSignal Web SDK v16 -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "423839f3-d5ae-48a6-9766-a0a0576f027e",
+        notifyButton: { enable: true },
+        serviceWorkerPath: "/notificador-micronauta/OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/notificador-micronauta/" }
+      });
+    });
+  </script>
+
 </head>
 <body class="bg-gray-100 text-gray-900">
   <div class="max-w-lg mx-auto pt-6 pb-24 px-4">
@@ -13,6 +27,13 @@
     <p class="text-xs text-center text-gray-500 mb-4">
       Administrá tus notificaciones programadas.
     </p>
+
+    <div class="text-center mb-4">
+      <button id="enablePushBtn"
+        class="px-4 py-2 bg-green-600 text-white rounded-full shadow hover:bg-green-700 active:scale-95 transition text-sm">
+        🔔 Activar notificaciones
+      </button>
+    </div>
 
     <div id="notifList" class="space-y-3"></div>
 
@@ -30,5 +51,19 @@
   </button>
 
 <script src="index.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const btn = document.getElementById("enablePushBtn");
+    if (btn && window.OneSignalDeferred) {
+      btn.addEventListener("click", function() {
+        OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.Slidedown.promptPush();
+        });
+      });
+    }
+  });
+</script>
+
 </body>
 </html>

@@ -126,10 +126,14 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   if ("serviceWorker" in navigator) {
-    Notification.requestPermission().then(() => {
-      navigator.serviceWorker.register("service-worker.js").then(() => {
-        pushConfigToSW();
-      });
-    });
+    navigator.serviceWorker.ready
+      .then(() => {
+        try {
+          pushConfigToSW();
+        } catch (e) {
+          console.error(e);
+        }
+      })
+      .catch(console.error);
   }
 });
