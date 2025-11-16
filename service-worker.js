@@ -37,7 +37,7 @@ function check() {
     const key = current;
     if (lastNotified === key) return;
     lastNotified = key;
-    showNotification("Consultar Horarios del Colectivo", { body: "Tocá para abrir TUBONDI", data: { url: TARGET_URL }, vibrate: [200,100,200] });
+    showNotification("Urbanos Córdoba", { body: "Tocá para abrir la página", data: { url: TARGET_URL }, vibrate: [200,100,200] });
   } else {
     lastNotified = null;
   }
