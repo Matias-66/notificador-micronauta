@@ -3,125 +3,247 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Notificaciones Programadas</title>
+  <title>Notificador Colectivo</title>
   <link rel="manifest" href="manifest.json" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}</style>
 </head>
 <body class="bg-gray-100 text-gray-900">
-  <div class="max-w-lg mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
-    <h1 class="text-2xl font-bold mb-4 text-center">⏰ Notificaciones Programadas</h1>
-    <p class="mb-4 text-center">Notificaciones L-V a horarios configurables. Al tocar la notificación se abre la URL configurada.</p>
+  <div class="max-w-lg mx-auto mt-8 p-6 bg-white rounded-2xl shadow-md space-y-4">
+    <h1 class="text-2xl font-bold text-center">🚌 Notificador de Colectivo</h1>
+    <p class="text-sm text-center text-gray-600">
+      Esta app envía notificaciones para consultar horarios del colectivo y una notificación horaria entre 09:00 y 22:00.
+    </p>
 
-    <button id="enable-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all">Habilitar Notificaciones</button>
-    <p id="status" class="mt-4 text-center text-sm text-gray-600"></p>
+    <button id="enableBtn" class="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold">
+      Habilitar notificaciones
+    </button>
+    <p id="status" class="text-xs text-center text-gray-500"></p>
 
-    <div class="mt-6">
-      <h2 class="text-lg font-semibold mb-2">Prueba</h2>
-      <p class="text-sm text-gray-600 mb-2">Enviar una notificación de prueba (vibración + sonido predeterminado del dispositivo).</p>
-      <div class="flex gap-2">
-        <button id="testNotification" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg">Enviar notificación de prueba</button>
-        <button id="testForeground" class="py-2 px-3 bg-gray-200 rounded-lg">Test sonido (foreground)</button>
+    <!-- ON/OFF -->
+    <div class="flex items-center justify-between mt-4">
+      <span class="font-semibold">Notificaciones activadas</span>
+      <label class="inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="notifToggle" class="sr-only peer">
+        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 after:content-[''] after:absolute after:w-5 after:h-5 after:bg-white after:rounded-full after:shadow after:transition-all"></div>
+      </label>
+    </div>
+
+    <!-- Días de la semana -->
+    <div>
+      <p class="font-semibold mb-1">Días activos</p>
+      <div class="grid grid-cols-7 gap-1 text-center text-xs">
+        <label class="flex flex-col items-center">
+          <input type="checkbox" class="day-check" data-day="1" />L
+        </label>
+        <label class="flex flex-col items-center">
+          <input type="checkbox" class="day-check" data-day="2" />M
+        </label>
+        <label class="flex flex-col items-center">
+          <input type="checkbox" class="day-check" data-day="3" />M
+        </label>
+        <label class="flex flex-col items-center">
+          <input type="checkbox" class="day-check" data-day="4" />J
+        </label>
+        <label class="flex flex-col items-center">
+          <input type="checkbox" class="day-check" data-day="5" />V
+        </label>
+        <label class="flex flex-col items-center">
+          <input type="checkbox" class="day-check" data-day="6" />S
+        </label>
+        <label class="flex flex-col items-center">
+          <input type="checkbox" class="day-check" data-day="0" />D
+        </label>
       </div>
     </div>
-  </div>
 
-  <div class="max-w-lg mx-auto mt-6 p-4 bg-white rounded-xl shadow text-center">
-    <h2 class="text-xl font-semibold mb-2">⚙️ Configuración de Horarios</h2>
-    <p class="text-sm mb-4">Modificá los horarios. El Service Worker intentará respetarlos incluso en segundo plano.</p>
-    <div class="space-y-3" id="inputs"></div>
-    <div class="flex gap-2 mt-2">
-      <button id="addTime" class="flex-1 py-2 bg-gray-100 rounded-xl">Agregar hora</button>
-      <button id="save-btn" class="flex-1 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700">Guardar</button>
+    <!-- Horarios principales -->
+    <div>
+      <div class="flex items-center justify-between mb-1">
+        <p class="font-semibold">Horarios principales</p>
+        <button id="addHorario" class="w-8 h-8 rounded-full bg-blue-500 text-white text-xl leading-none flex items-center justify-center">
+          +
+        </button>
+      </div>
+      <div id="schedules" class="space-y-2"></div>
+    </div>
+
+    <!-- Notificación horaria -->
+    <div class="border-t pt-3">
+      <p class="font-semibold mb-2">Notificación horaria (otra web/app)</p>
+      <label class="flex items-center space-x-2 mb-2">
+        <input type="checkbox" id="hourlyToggle" />
+        <span>Activar de 09:00 a 22:00</span>
+      </label>
+      <label class="block text-sm mb-1">URL de destino</label>
+      <input type="text" id="hourlyUrl" class="w-full border rounded px-2 py-1 text-sm" placeholder="https://otra-app-o-web.com" />
+    </div>
+
+    <button id="saveBtn" class="w-full py-2 bg-green-600 text-white rounded-lg font-semibold">
+      Guardar configuración
+    </button>
+
+    <div class="border-t pt-3">
+      <p class="font-semibold mb-1">Prueba</p>
+      <button id="testBtn" class="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm">
+        Enviar notificación de prueba
+      </button>
     </div>
   </div>
 
-  <audio id="ding" preload="auto">
-    <source src="ding.ogg" type="audio/ogg" />
-  </audio>
-
 <script>
-const TARGET_URL = "https://micronauta4.dnsalias.net/web/urbano/?conf=cbaciudad";
+const MAIN_URL = "https://micronauta4.dnsalias.net/web/urbano/?conf=cbaciudad";
+
+const defaultConfig = {
+  enabled: true,
+  days: [1,2,3,4,5],
+  times: ["07:50","16:50"],
+  hourly: {
+    enabled: false,
+    url: "https://ejemplo.com"
+  }
+};
+
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem("notiConfig");
+    if (!raw) return { ...defaultConfig };
+    const cfg = JSON.parse(raw);
+    return Object.assign({}, defaultConfig, cfg, {
+      hourly: Object.assign({}, defaultConfig.hourly, cfg.hourly || {})
+    });
+  } catch(e) {
+    console.error(e);
+    return { ...defaultConfig };
+  }
+}
+
+function saveConfig(config) {
+  localStorage.setItem("notiConfig", JSON.stringify(config));
+}
 
 async function enableNotifications() {
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") {
-    document.getElementById("status").textContent = "Permiso denegado";
+  const perm = await Notification.requestPermission();
+  const statusEl = document.getElementById("status");
+  if (perm !== "granted") {
+    statusEl.textContent = "Permiso de notificaciones denegado.";
     return;
   }
   if ("serviceWorker" in navigator) {
     try {
-      await navigator.serviceWorker.register("service-worker.js");
-      document.getElementById("status").textContent = "Notificaciones habilitadas";
-      const times = JSON.parse(localStorage.getItem("notiTimes") || '["07:50","16:50"]');
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: "updateTimes", times });
+      const reg = await navigator.serviceWorker.register("service-worker.js");
+      statusEl.textContent = "Service Worker registrado.";
+      const config = loadConfig();
+      if (reg.active) {
+        reg.active.postMessage({ type: "updateConfig", config });
+      } else if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "updateConfig", config });
       }
-    } catch (e) {
+    } catch(e) {
       console.error(e);
-      document.getElementById("status").textContent = "Error registrando SW";
+      statusEl.textContent = "Error registrando Service Worker.";
     }
   } else {
-    document.getElementById("status").textContent = "Service Worker no soportado";
+    statusEl.textContent = "Service Worker no soportado.";
   }
 }
 
-document.getElementById("enable-btn").addEventListener("click", enableNotifications);
+function renderFromConfig(config) {
+  const notifToggle = document.getElementById("notifToggle");
+  const dayChecks = document.querySelectorAll(".day-check");
+  const schedulesEl = document.getElementById("schedules");
+  const hourlyToggle = document.getElementById("hourlyToggle");
+  const hourlyUrl = document.getElementById("hourlyUrl");
 
-document.getElementById("testNotification").addEventListener("click", async () => {
-  if (!('serviceWorker' in navigator)) { alert('Service Worker no soportado.'); return; }
-  const reg = await navigator.serviceWorker.ready;
-  reg.active.postMessage({ type: 'showNow', title: '🔔 Notificación de prueba', body: 'La PWA está funcionando. Toca para abrir.', url: TARGET_URL });
-});
-
-document.getElementById("testForeground").addEventListener("click", () => {
-  const audio = document.getElementById('ding');
-  audio.currentTime = 0;
-  audio.play().catch(()=>{ alert('No se pudo reproducir sonido (requiere interacción).'); });
-});
-
-const inputContainer = document.getElementById("inputs");
-const saveBtn = document.getElementById("save-btn");
-const addTimeBtn = document.getElementById("addTime");
-
-function loadTimes() {
-  const saved = JSON.parse(localStorage.getItem("notiTimes") || '["07:50","16:50"]');
-  inputContainer.innerHTML = "";
-  saved.forEach((t, i) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'flex gap-2';
-    wrapper.innerHTML = `<input type="time" value="${t}" data-idx="${i}" class="flex-1 p-2 border rounded-xl"> <button class="removeBtn p-2 bg-red-500 text-white rounded-xl">Eliminar</button>`;
-    inputContainer.appendChild(wrapper);
+  notifToggle.checked = !!config.enabled;
+  dayChecks.forEach(cb => {
+    const d = parseInt(cb.dataset.day, 10);
+    cb.checked = config.days.includes(d);
   });
-  attachRemove();
+
+  schedulesEl.innerHTML = "";
+  (config.times && config.times.length ? config.times : ["07:50","16:50"]).forEach(t => {
+    const row = document.createElement("div");
+    row.className = "flex gap-2";
+    row.innerHTML = \`<input type="time" class="horario-item flex-1 border rounded px-2 py-1 text-sm" value="\${t}">
+      <button class="removeBtn px-3 bg-red-500 text-white rounded">−</button>\`;
+    schedulesEl.appendChild(row);
+  });
+
+  schedulesEl.querySelectorAll(".removeBtn").forEach(btn => {
+    btn.onclick = () => btn.parentElement.remove();
+  });
+
+  hourlyToggle.checked = !!config.hourly.enabled;
+  hourlyUrl.value = config.hourly.url || "";
 }
 
-function attachRemove() {
-  [...document.querySelectorAll('.removeBtn')].forEach(b=>{
-    b.onclick = (e)=>{ e.target.parentElement.remove(); };
-  });
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const cfg = loadConfig();
+  renderFromConfig(cfg);
 
-addTimeBtn.addEventListener('click', ()=>{
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2,'0');
-  const mm = String(now.getMinutes()+1).padStart(2,'0');
-  const wrapper = document.createElement('div');
-  wrapper.className = 'flex gap-2';
-  wrapper.innerHTML = `<input type="time" value="${hh}:${mm}" class="flex-1 p-2 border rounded-xl"> <button class="removeBtn p-2 bg-red-500 text-white rounded-xl">Eliminar</button>`;
-  inputContainer.appendChild(wrapper);
-  attachRemove();
+  document.getElementById("enableBtn").onclick = enableNotifications;
+
+  document.getElementById("addHorario").onclick = () => {
+    const schedulesEl = document.getElementById("schedules");
+    const row = document.createElement("div");
+    row.className = "flex gap-2";
+    row.innerHTML = '<input type="time" class="horario-item flex-1 border rounded px-2 py-1 text-sm"><button class="removeBtn px-3 bg-red-500 text-white rounded">−</button>';
+    schedulesEl.appendChild(row);
+    row.querySelector(".removeBtn").onclick = () => row.remove();
+  };
+
+  document.getElementById("saveBtn").onclick = async () => {
+    const notifToggle = document.getElementById("notifToggle");
+    const dayChecks = document.querySelectorAll(".day-check");
+    const horarioInputs = document.querySelectorAll(".horario-item");
+    const hourlyToggle = document.getElementById("hourlyToggle");
+    const hourlyUrl = document.getElementById("hourlyUrl");
+
+    const days = Array.from(dayChecks)
+      .filter(cb => cb.checked)
+      .map(cb => parseInt(cb.dataset.day, 10));
+
+    const times = Array.from(horarioInputs)
+      .map(i => i.value)
+      .filter(v => !!v);
+
+    const config = {
+      enabled: notifToggle.checked,
+      days: days.length ? days : [1,2,3,4,5],
+      times: times.length ? times : ["07:50","16:50"],
+      hourly: {
+        enabled: hourlyToggle.checked,
+        url: hourlyUrl.value || "https://ejemplo.com"
+      }
+    };
+
+    saveConfig(config);
+
+    if ("serviceWorker" in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      if (reg.active) {
+        reg.active.postMessage({ type: "updateConfig", config });
+      } else if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "updateConfig", config });
+      }
+    }
+
+    alert("Configuración guardada");
+  };
+
+  document.getElementById("testBtn").onclick = async () => {
+    if (!("serviceWorker" in navigator)) {
+      alert("Service Worker no soportado.");
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.active) {
+      reg.active.postMessage({ type: "testNotification" });
+    } else if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: "testNotification" });
+    }
+  };
 });
-
-saveBtn.addEventListener("click", () => {
-  const times = [...document.querySelectorAll("#inputs input")].map(e => e.value).filter(Boolean);
-  if (times.length === 0) { alert('Ingresá al menos un horario'); return; }
-  localStorage.setItem("notiTimes", JSON.stringify(times));
-  if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: "updateTimes", times });
-  alert('Horarios guardados');
-});
-
-loadTimes();
 </script>
 </body>
 </html>

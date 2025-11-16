@@ -1,58 +1,97 @@
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", () => { self.clients.claim(); });
-
-let times = ["07:50","16:50"];
-const TARGET_URL = "https://micronauta4.dnsalias.net/web/urbano/?conf=cbaciudad";
-let lastNotified = null;
-
-self.addEventListener("message", evt => {
-  try {
-    if (evt.data?.type === "updateTimes") {
-      times = evt.data.times || times;
-    }
-    if (evt.data?.type === "showNow") {
-      const p = evt.data;
-      showNotification(p.title || "Notificación", { body: p.body || "", data: { url: p.url || TARGET_URL }});
-    }
-  } catch(e) { console.error(e); }
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
 });
 
-function showNotification(title, options) {
-  const opts = Object.assign({
-    vibrate: [200,100,200],
-    icon: 'icons/icon-192.png',
-    badge: 'icons/icon-192.png'
-  }, options);
-  return self.registration.showNotification(title, opts);
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+let config = {
+  enabled: true,
+  days: [1,2,3,4,5],
+  times: ["07:50","16:50"],
+  hourly: {
+    enabled: false,
+    url: "https://ejemplo.com"
+  }
+};
+
+const MAIN_URL = "https://micronauta4.dnsalias.net/web/urbano/?conf=cbaciudad";
+
+let lastMainMinute = null;
+let lastHourlyHour = null;
+
+self.addEventListener("message", (event) => {
+  const data = event.data || {};
+  if (data.type === "updateConfig" && data.config) {
+    config = data.config;
+  }
+  if (data.type === "testNotification") {
+    showNotification("Notificación de prueba", "La PWA está funcionando correctamente.", MAIN_URL);
+  }
+});
+
+function showNotification(title, body, url) {
+  return self.registration.showNotification(title, {
+    body,
+    icon: "icons/icon-192.png",
+    badge: "icons/icon-192.png",
+    vibrate: [200, 100, 200],
+    data: { url }
+  });
 }
 
-function check() {
+function tick() {
+  if (!config.enabled) return;
+
   const now = new Date();
   const day = now.getDay();
-  if (day < 1 || day > 5) return;
-  const hh = String(now.getHours()).padStart(2,"0");
-  const mm = String(now.getMinutes()).padStart(2,"0");
-  const current = `${hh}:${mm}`;
-  if (times.includes(current)) {
-    const key = current;
-    if (lastNotified === key) return;
-    lastNotified = key;
-    showNotification("Urbanos Córdoba", { body: "Tocá para abrir la página", data: { url: TARGET_URL }, vibrate: [200,100,200] });
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+
+  const hh = String(hours).padStart(2,"0");
+  const mm = String(minutes).padStart(2,"0");
+  const current = hh + ":" + mm;
+
+  if (config.days.includes(day) && config.times.includes(current)) {
+    if (lastMainMinute !== current) {
+      lastMainMinute = current;
+      showNotification("Consultar Horarios del Colectivo", "Click para abrir TUBONDI", MAIN_URL);
+    }
   } else {
-    lastNotified = null;
+    if (lastMainMinute === current) {
+      lastMainMinute = null;
+    }
+  }
+
+  if (config.hourly && config.hourly.enabled) {
+    if (hours >= 9 && hours <= 22 && minutes === 0) {
+      if (lastHourlyHour !== hours) {
+        lastHourlyHour = hours;
+        const url = config.hourly.url || "https://ejemplo.com";
+        showNotification("Recordatorio cada hora", "Ingresá a la otra app/web.", url);
+      }
+    } else if (minutes !== 0) {
+      lastHourlyHour = null;
+    }
   }
 }
 
-setInterval(check, 60000);
+setInterval(tick, 60000);
 
-self.addEventListener("notificationclick", event => {
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification?.data?.url || TARGET_URL;
-  event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(windowClients => {
-    for (let i = 0; i < windowClients.length; i++) {
-      const client = windowClients[i];
-      if (client.url === url && 'focus' in client) return client.focus();
-    }
-    if (clients.openWindow) return clients.openWindow(url);
-  }));
+  const url = (event.notification.data && event.notification.data.url) || MAIN_URL;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === url && "focus" in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(url);
+      }
+    })
+  );
 });
